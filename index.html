@@ -80,9 +80,11 @@ if(!any&&k){if(!nr){nr=document.createElement('div');nr.id='noResult';nr.classNa
 function S(n){var a=document.getElementById('app'),cs=SCHEDULES[n],days=['周一','周二','周三','周四','周五','周六','周日'];
 if(!cs){a.innerHTML='<div class="no-course">暂无数据</div>';return}
 var h='<button class="back-btn" onclick="R()">返回班级列表</button><div class="view-title">'+E(n)+' 课表</div>';
-days.forEach(function(d){var fc=cs.filter(function(c){return c.d===d});h+='<div class="day-block"><span class="day-label">'+d+'</span>';
-if(!fc.length)h+='<div class="no-course">暂无课程</div>';
-else fc.forEach(function(c){h+='<div class="course-row"><div class="time-col">'+E(c.p)+'<br><small>'+E(c.t)+'</small></div><div class="info-col"><div class="c-name">'+E(c.n)+'</div><div class="c-detail">'+E(c.w)+'</div></div><div class="room-tag">'+E(c.r)+'</div></div>'});
+days.forEach(function(d){var fc=cs.filter(function(c){return c.d===d});
+if(!fc.length)return;
+fc.sort(function(a,b){return parseInt(a.p)-parseInt(b.p)});
+h+='<div class="day-block"><span class="day-label">'+d+'</span>';
+fc.forEach(function(c){h+='<div class="course-row"><div class="time-col">'+E(c.p)+'<br><small>'+E(c.t)+'</small></div><div class="info-col"><div class="c-name">'+E(c.n)+'</div><div class="c-detail">'+E(c.w)+'</div></div><div class="room-tag">'+E(c.r)+'</div></div>'});
 h+='</div>'});a.innerHTML=h}
 R();
 setTimeout(function(){if(!sessionStorage.getItem('qs')){Q.show();sessionStorage.setItem('qs','1')}},300);

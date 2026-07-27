@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>福建江夏学院 - 新生课表查询</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f4f8; min-height: 100vh; }
+  
+  .header {
+    background: linear-gradient(135deg, #1a5276, #2980b9);
+    color: #fff; padding: 28px 20px 16px;
+    text-align: center; position: relative; overflow: hidden;
+  }
+  .header::after {
+    content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+    height: 40px; background: #f0f4f8; border-radius: 50% 50% 0 0;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 700; position: relative; z-index:1; }
+  .header p { font-size: 0.8rem; opacity: 0.85; margin-top: 4px; position: relative; z-index:1; }
+  
+  .container { max-width: 640px; margin: 0 auto; padding: 12px 14px 40px; }
+  
+  .search-box {
+    position: sticky; top: 0; z-index: 10; background: #f0f4f8;
+    padding: 8px 0 12px;
+  }
+  .search-box input {
+    width: 100%; height: 42px; padding: 0 14px; border: 2px solid #dce4ec;
+    border-radius: 10px; font-size: 0.95rem; outline: none; background: #fff;
+    transition: border-color 0.15s;
+  }
+  .search-box input:focus { border-color: #2980b9; }
+  
+  .major-group { margin-bottom: 18px; }
+  .major-title {
+    font-size: 0.85rem; font-weight: 700; color: #2980b9;
+    padding: 6px 0; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+  }
+  .major-title::before { content: ''; width: 4px; height: 16px; background: #2980b9; border-radius: 2px; }
+  
+  .class-grid { display: grid; gap: 6px; grid-template-columns: 1fr 1fr; }
+  .class-card {
+    background: #fff; border-radius: 8px; padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04); cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .class-card:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+  .class-card .name { font-size: 0.88rem; font-weight: 600; color: #2c3e50; }
+  .class-card .badge {
+    display: inline-block; background: #e8f4fd; color: #2980b9;
+    font-size: 0.68rem; padding: 2px 7px; border-radius: 8px; margin-top: 4px;
+  }
+  
+  .hidden { display: none !important; }
+  
+  @media (max-width: 400px) {
+    .class-grid { grid-template-columns: 1fr; }
+  }
+  
+  /* Schedule View */
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: #2980b9; font-size: 0.9rem; cursor: pointer;
+    margin-bottom: 10px; border: none; background: none; font-weight: 600;
+  }
+  .back-btn::before { content: '←'; font-size: 1.1rem; }
+  .view-title { font-size: 1.05rem; font-weight: 700; color: #2c3e50; margin-bottom: 12px; }
+  
+  .day-block { margin-bottom: 14px; }
+  .day-label {
+    font-size: 0.85rem; font-weight: 700; color: #fff;
+    background: #2980b9; display: inline-block; padding: 3px 12px;
+    border-radius: 6px; margin-bottom: 6px;
+  }
+  .course-row {
+    background: #fff; border-radius: 8px; padding: 10px 12px;
+    margin-bottom: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .course-row .time-col {
+    flex-shrink: 0; width: 50px; text-align: center;
+    font-size: 0.72rem; color: #7f8c8d; line-height: 1.3;
+  }
+  .course-row .info-col { flex:1; min-width:0; }
+  .course-row .c-name { font-size: 0.88rem; font-weight: 600; color: #2c3e50; }
+  .course-row .c-detail { font-size: 0.72rem; color: #7f8c8d; margin-top: 2px; }
+  .course-row .room-tag {
+    flex-shrink: 0; background: #f0f4f8; color: #555;
+    font-size: 0.68rem; padding: 2px 7px; border-radius: 4px;
+  }
+  
+  .no-course { text-align:center; color: #bdc3c7; padding: 16px; font-size: 0.82rem; }
+  .loading { text-align:center; color:#7f8c8d; padding:40px; }
+  .error { text-align:center; color:#e74c3c; padding:40px; font-size:0.88rem; }
+  .error button { margin-top:10px; padding:8px 20px; background:#2980b9; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+  .no-result { text-align:center; color:#bdc3c7; padding:30px; font-size:0.85rem; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.55); z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn 0.25s;
+  }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal-box {
+    background: #fff; border-radius: 16px; padding: 24px 20px 18px;
+    max-width: 300px; width: 88%; text-align: center;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    animation: slideUp 0.3s;
+  }
+  @keyframes slideUp { from { transform:translateY(30px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  .modal-box img { width: 180px; height: 180px; border-radius: 10px; border: 2px solid #eee; }
+  .modal-box .qr-tip {
+    font-size: 0.82rem; color: #555; margin-top: 12px; line-height: 1.6;
+  }
+  .modal-box .qr-tip strong { color: #2980b9; }
+  .modal-close {
+    display: block; margin: 14px auto 0; padding: 8px 36px;
+    background: #2980b9; color: #fff; border: none; border-radius: 20px;
+    font-size: 0.9rem; cursor: pointer; font-weight: 600;
+  }
+  .modal-close:active { background: #1a5276; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📋 新生课表查询</h1>
+  <p>福建江夏学院 · 2025-2026学年第1学期</p>
+</div>
+<div class="container" id="app"></div>
+
+<div class="modal-overlay hidden" id="qrModal">
+  <div class="modal-box">
+    <img src="/static/qr.png" alt="微信二维码">
+    <div class="qr-tip">本课表仅供参考<br>最新课表请加<strong>上方微信</strong>，实时更新！</div>
+    <button class="modal-close" onclick="closeModal()">我知道了</button>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let allClasses = [];
+
+async function loadClasses() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading">加载班级列表...</div>';
+  try {
+    const res = await fetch(API + '/classes');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    allClasses = await res.json();
+    renderClassList(allClasses);
+    // Show QR modal on first visit
+    if (!sessionStorage.getItem('qrShown')) {
+      setTimeout(() => { document.getElementById('qrModal').classList.remove('hidden'); }, 400);
+      sessionStorage.setItem('qrShown', '1');
+    }
+  } catch (e) {
+    app.innerHTML = `<div class="error">⚠️ 无法加载<br><small>${e.message}</small><br><button onclick="loadClasses()">重试</button></div>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('qrModal').classList.add('hidden');
+}
+
+function renderClassList(classes) {
+  const app = document.getElementById('app');
+  const groups = {};
+  classes.forEach(c => {
+    let m = c.major || '其他';
+    m = m.replace(/【本科】/g, '').replace(/（专升本）/g, '').replace(/（闽台合作.+?）/g, '').trim();
+    if (!groups[m]) groups[m] = [];
+    groups[m].push(c);
+  });
+  let html = `<div class="search-box"><input type="text" id="filterInput" placeholder="搜索班级名称..." oninput="filterClasses()"></div>`;
+  for (const [major, items] of Object.entries(groups).sort()) {
+    html += `<div class="major-group" data-major="${escapeHtml(major)}">`;
+    html += `<div class="major-title">${escapeHtml(major)} <small style="font-weight:400;color:#95a5a6;">${items.length}个班</small></div>`;
+    html += `<div class="class-grid">`;
+    items.forEach(c => {
+      html += `
+        <div class="class-card" data-name="${escapeHtml(c.name)}" onclick="loadSchedule('${escapeAttr(c.name)}')">
+          <div class="name">${formatClassName(c.name)}</div>
+          <span class="badge">${c.course_count}门课程</span>
+        </div>`;
+    });
+    html += `</div></div>`;
+  }
+  html += `<p style="text-align:center;color:#bdc3c7;font-size:0.72rem;margin-top:16px;">共 ${classes.length} 个班级 · 福建江夏学院</p>`;
+  app.innerHTML = html;
+}
+
+function formatClassName(full) { return full; }
+
+function filterClasses() {
+  const keyword = document.getElementById('filterInput').value.trim().toLowerCase();
+  const cards = document.querySelectorAll('.class-card');
+  const groups = document.querySelectorAll('.major-group');
+  groups.forEach(group => {
+    const groupCards = group.querySelectorAll('.class-card');
+    let groupHasMatch = false;
+    groupCards.forEach(card => {
+      const name = (card.dataset.name || '').toLowerCase();
+      const match = !keyword || name.includes(keyword);
+      card.classList.toggle('hidden', !match);
+      if (match) groupHasMatch = true;
+    });
+    group.classList.toggle('hidden', !groupHasMatch);
+  });
+  let nr = document.getElementById('noResult');
+  const anyVisible = !!document.querySelector('.major-group:not(.hidden)');
+  if (!anyVisible && keyword) {
+    if (!nr) { nr = document.createElement('div'); nr.id = 'noResult'; nr.className = 'no-result'; nr.textContent = '未找到匹配的班级'; document.getElementById('app').appendChild(nr); }
+    nr.classList.remove('hidden');
+  } else if (nr) { nr.classList.add('hidden'); }
+}
+
+async function loadSchedule(className) {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="loading">加载课表中...</div>';
+  try {
+    const res = await fetch(API + '/query', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({class_name:className}) });
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'HTTP '+res.status); }
+    const data = await res.json();
+    renderSchedule(data);
+  } catch (e) {
+    app.innerHTML = `<div class="error">⚠️ 加载失败<br><small>${e.message}</small><br><button onclick="loadClasses()">返回列表</button></div>`;
+  }
+}
+
+function renderSchedule(data) {
+  const app = document.getElementById('app');
+  const days = ['周一','周二','周三','周四','周五','周六','周日'];
+  let html = `<button class="back-btn" onclick="loadClasses()">返回班级列表</button><div class="view-title">${escapeHtml(data.class_name)} 课表</div>`;
+  for (const day of days) {
+    const courses = (data.courses||[]).filter(c => c.day===day);
+    html += `<div class="day-block"><span class="day-label">${day}</span>`;
+    if (!courses.length) { html += '<div class="no-course">暂无课程</div>'; }
+    else { courses.forEach(c => { html += `<div class="course-row"><div class="time-col">${escapeHtml(c.period)}<br><small>${escapeHtml(c.time)}</small></div><div class="info-col"><div class="c-name">${escapeHtml(c.name)}</div><div class="c-detail">${escapeHtml(c.teacher)}</div></div><div class="room-tag">${escapeHtml(c.room)}</div></div>`; }); }
+    html += '</div>';
+  }
+  app.innerHTML = html;
+}
+
+function escapeHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+function escapeAttr(str) { return (str||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+loadClasses();
+</script>
+</body>
+</html>

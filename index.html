@@ -70,7 +70,7 @@ function R(){var a=document.getElementById('app'),g={},h='';
 ALL.forEach(function(c){var m=c.major||'其他';m=m.replace(/【本科】/g,'').replace(/（专升本）/g,'').replace(/（闽台合作.+?）/g,'').trim();if(!g[m])g[m]=[];g[m].push(c)});
 h='<div class="search-box"><input type="text" id="filterInput" placeholder="搜索班级名称..." oninput="F()"></div>';
 Object.keys(g).sort().forEach(function(m){var items=g[m];h+='<div class="major-group" data-major="'+E(m)+'"><div class="major-title">'+E(m)+' <small style="font-weight:400;color:#95a5a6;">'+items.length+'个班</small></div><div class="class-grid">';
-items.forEach(function(c){h+='<div class="class-card" data-name="'+E(c.name)+'" onclick="S(''+A(c.name)+'')"><div class="name">'+E(c.name)+'</div><span class="badge">'+c.count+'门课程</span></div>'});
+items.forEach(function(c){h+='<div class="class-card" data-name="'+E(c.name)+'" onclick="S(\'\'+A(c.name)+\'\')"><div class="name">'+E(c.name)+'</div><span class="badge">'+c.count+'门课程</span></div>'});
 h+='</div></div>'});
 h+='<p style="text-align:center;color:#bdc3c7;font-size:.72rem;margin-top:16px">共 '+ALL.length+' 个班级 · 福建江夏学院</p>';
 a.innerHTML=h}
